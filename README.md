@@ -8,10 +8,10 @@
 5. Nabila Shafa Salsabila Nurhardriani
 
 ## Deskripsi
-Campus Lost & Found merupakan aplikasi mobile
-berbasis Flutter yang membantu mahasiswa
-melaporkan dan menemukan barang hilang
-di lingkungan kampus.
+Campus Lost & Found merupakan aplikasi mobile berbasis Flutter
+yang membantu mahasiswa melaporkan barang hilang maupun barang
+ditemukan di lingkungan kampus serta mencari informasi terkait
+barang tersebut.
 
 ## Tujuan
 - Memudahkan pelaporan barang hilang.
