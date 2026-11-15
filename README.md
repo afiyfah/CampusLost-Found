@@ -38,3 +38,11 @@ di lingkungan kampus.
 2. Buka folder project.
 3. Jalankan flutter pub get.
 4. Jalankan flutter run.
+
+## Collabolator 
+<img width="1901" height="916" alt="image" src="https://github.com/user-attachments/assets/22e4fa77-6040-49d3-9fb7-3fb814721ddb" />
+1. @Adeliarosa04 Adeliarosa04
+2. @dfazhra dfazhra
+3. @Hasnafata Hasnafata
+4. @afifahsarifudin09 afiyfah 
+5. @nabilaeuonia nabilaeuonia
