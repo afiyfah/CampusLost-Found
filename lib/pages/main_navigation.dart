@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
 import 'search_page.dart';
+import 'my_reports_page.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -24,19 +25,12 @@ class _MainNavigationState extends State<MainNavigation> {
   Widget build(BuildContext context) {
     final pages = [
       HomePage(onNavigate: changePage),
-
-      // Halaman pencarian milik Hasna
       const SearchPage(),
-
-      // Halaman anggota lain tetap dipertahankan
       const _TemporaryPage(
         title: 'Lapor Barang',
         icon: Icons.add_circle_outline,
       ),
-      const _TemporaryPage(
-        title: 'Laporan Saya',
-        icon: Icons.assignment_outlined,
-      ),
+      const MyReportsPage(),
       const _TemporaryPage(
         title: 'Profil',
         icon: Icons.person_outline,
@@ -89,7 +83,7 @@ class _MainNavigationState extends State<MainNavigation> {
   }
 }
 
-// Halaman sementara untuk fitur anggota lain
+// Halaman sementara untuk fitur dalam pengembangan
 class _TemporaryPage extends StatelessWidget {
   final String title;
   final IconData icon;
