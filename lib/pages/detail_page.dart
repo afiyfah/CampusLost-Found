@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../services/report_service.dart';
 import '../widgets/report_card.dart';
+import '../widgets/report_contact.dart';
 
 class DetailPage extends StatelessWidget {
-  final QueryDocumentSnapshot<Map<String, dynamic>>
-      document;
+  final QueryDocumentSnapshot<Map<String, dynamic>> document;
 
   const DetailPage({
     super.key,
@@ -28,6 +28,7 @@ class DetailPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(18),
         children: [
+          // Foto barang
           ClipRRect(
             borderRadius: BorderRadius.circular(18),
             child: Container(
@@ -37,7 +38,7 @@ class DetailPage extends StatelessWidget {
                   ? Image.network(
                       imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) {
+                      errorBuilder: (_, _, _) {
                         return const Icon(
                           Icons.inventory_2_outlined,
                           size: 86,
@@ -52,7 +53,10 @@ class DetailPage extends StatelessWidget {
                     ),
             ),
           ),
+
           const SizedBox(height: 18),
+
+          // Nama barang
           Text(
             reportText(data, 'itemName'),
             style: const TextStyle(
@@ -61,24 +65,33 @@ class DetailPage extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
+
           const SizedBox(height: 7),
+
+          // Jenis dan status laporan
           Text(
             '${isLost ? "Barang Hilang" : "Barang Ditemukan"} · '
             'Status ${reportText(data, "status", "aktif")}',
           ),
+
           const SizedBox(height: 18),
+
+          // Informasi barang
           _Info(
             'Kategori',
             reportText(data, 'category'),
           ),
+
           _Info(
             'Lokasi',
             reportText(data, 'location'),
           ),
+
           _Info(
             'Tanggal',
             reportDate(data['eventDate']),
           ),
+
           _Info(
             'Waktu',
             reportText(
@@ -87,7 +100,16 @@ class DetailPage extends StatelessWidget {
               'Tidak dicantumkan',
             ),
           ),
+
           const SizedBox(height: 16),
+
+          const Divider(
+            color: Color(0xFFE8E5F2),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Deskripsi barang
           const Text(
             'Deskripsi / Ciri-ciri',
             style: TextStyle(
@@ -96,55 +118,32 @@ class DetailPage extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
+
           const SizedBox(height: 7),
+
           Text(
             reportText(data, 'description'),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'Kontak Pelapor',
-            style: TextStyle(
-              fontSize: 17,
-              color: campusInk,
-              fontWeight: FontWeight.bold,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.6,
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            reportText(data, 'contact'),
+
+          const SizedBox(height: 24),
+
+          // Tombol Hubungi via WhatsApp
+          ReportContact(
+            contact: reportText(data, 'contact', ''),
           ),
-          const SizedBox(height: 12),
-          const Text(
-            'Hubungi pelapor melalui kanal yang disepakati. '
-            'Jangan membagikan data pribadi atau bukti '
-            'kepemilikan secara publik.',
-            style: TextStyle(
-              color: Colors.black54,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 18),
-          FilledButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Fitur hubungi pelapor belum diaktifkan. '
-                    'Untuk saat ini gunakan kontak '
-                    'yang tercantum.',
-                  ),
-                ),
-              );
-            },
-            icon: const Icon(Icons.phone_outlined),
-            label: const Text('Hubungi Pelapor'),
-          ),
+
+          const SizedBox(height: 16),
         ],
       ),
     );
   }
 }
 
+// Komponen informasi barang
 class _Info extends StatelessWidget {
   final String label;
   final String value;
