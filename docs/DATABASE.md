@@ -78,10 +78,32 @@ Tidak ada perpindahan balik dari `selesai` ke `aktif` di aplikasi saat ini.
 
 ## 5. Autentikasi
 
-- `main.dart` memanggil `signInAnonymously()` bila belum ada sesi. Jika belum ada sesi saat `create()` atau `watchMine()` dipanggil, aplikasi melempar error `Pengguna belum login.`
-- `userId` pada laporan = `FirebaseAuth.instance.currentUser.uid`.
-- Akun anonim terikat pada perangkat/sesi; jika data aplikasi dihapus, UID berubah dan laporan lama tidak muncul lagi di "Laporan Saya".
+Aplikasi memakai **Firebase Authentication** dengan dua cara masuk:
+
+| Cara masuk | Metode Firebase | Keterangan |
+|---|---|---|
+| Email dan kata sandi | `signInWithEmailAndPassword` / `createUserWithEmailAndPassword` | Daftar menyimpan nama lengkap sebagai `displayName` |
+| Lanjutkan sebagai Tamu | `signInAnonymously` | Akun anonim, tanpa nama dan email |
+
+**Alur aplikasi:** buka aplikasi → `AuthGate` memeriksa sesi → belum login: halaman Masuk/Daftar; sudah login: dashboard. Login otomatis diingat Firebase, jadi pengguna tidak perlu masuk lagi saat membuka aplikasi berikutnya, sampai menekan **Keluar** di halaman Profil.
+
+**Data akun** (disimpan Firebase Authentication, bukan Firestore):
+
+| Data | Sumber di aplikasi |
+|---|---|
+| `uid` | ID unik akun; disalin ke field `userId` pada setiap laporan |
+| `displayName` | Nama lengkap saat Daftar |
+| `email` | Email saat Daftar |
+| `isAnonymous` | `true` jika masuk sebagai Tamu |
+
+**Catatan penting**
+
+- Syarat awal: di Firebase Console → **Authentication → Sign-in method**, metode **Email/Password** dan **Anonymous** harus berstatus *Enabled*.
+- Kata sandi minimal 6 karakter (aturan Firebase) dan tidak pernah disimpan di Firestore.
+- Laporan terikat pada `uid`. Laporan yang dibuat sebagai Tamu **tidak** ikut pindah ke akun terdaftar, karena `uid`-nya berbeda.
+- Jika data aplikasi dihapus saat masih sebagai Tamu, `uid` berubah dan laporan lama tidak muncul lagi di "Laporan Saya".
 - Data contoh (seed) memakai `userId: "user_demo"`, sehingga hanya muncul di Beranda/Pencarian, tidak di Laporan Saya.
+- Pesan error Firebase diterjemahkan ke bahasa Indonesia oleh `authErrorMessage()` di `auth_service.dart`.
 
 ## 6. Indeks
 

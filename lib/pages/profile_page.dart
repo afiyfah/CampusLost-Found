@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../services/auth_service.dart';
 import '../services/report_service.dart';
 import '../widgets/report_card.dart';
 
@@ -57,40 +58,53 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    // userChanges() ikut berubah saat nama akun selesai disimpan.
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.userChanges(),
+      initialData: FirebaseAuth.instance.currentUser,
+      builder: (context, snapshot) {
+        final user = snapshot.data;
 
-    return Scaffold(
-      backgroundColor: campusBackground,
-      appBar: AppBar(title: const Text('Profil')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          _Header(user: user),
-          const SizedBox(height: 22),
-          const _SectionTitle('Ringkasan Laporan Saya'),
-          const SizedBox(height: 10),
-          if (user == null)
-            const _Note(
-              'Sesi pengguna belum tersedia, '
-              'ringkasan laporan tidak dapat ditampilkan.',
-            )
-          else
-            const _StatsSection(),
-          const SizedBox(height: 22),
-          const _SectionTitle('ID Sesi Firebase'),
-          const SizedBox(height: 8),
-          _UidBox(uid: user?.uid),
-          const SizedBox(height: 22),
-          const _Note(
-            'Profil ini masih tahap awal. Login mahasiswa dan '
-            'verifikasi identitas belum diterapkan. Jangan '
-            'gunakan akun anonim sebagai bukti kepemilikan '
-            'barang.',
+        return Scaffold(
+          backgroundColor: campusBackground,
+          appBar: AppBar(title: const Text('Profil')),
+          body: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              _Header(user: user),
+              const SizedBox(height: 22),
+              const _SectionTitle('Ringkasan Laporan Saya'),
+              const SizedBox(height: 10),
+              if (user == null)
+                const _Note(
+                  'Sesi pengguna belum tersedia, '
+                  'ringkasan laporan tidak dapat ditampilkan.',
+                )
+              else
+                const _StatsSection(),
+              const SizedBox(height: 22),
+              const _SectionTitle('ID Akun'),
+              const SizedBox(height: 8),
+              _UidBox(uid: user?.uid),
+              const SizedBox(height: 22),
+              _AuthActions(user: user),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
+}
+
+String profileDisplayName(User? user) {
+  if (user == null) return 'Belum masuk';
+  if (user.isAnonymous) return 'Tamu';
+
+  final name = user.displayName?.trim() ?? '';
+  if (name.isNotEmpty) return name;
+
+  final email = user.email ?? '';
+  return email.contains('@') ? email.split('@').first : 'Pengguna';
 }
 
 class _Header extends StatelessWidget {
@@ -100,28 +114,47 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final anonymous = user?.isAnonymous == true;
+    final name = profileDisplayName(user);
+    final email = user?.email;
 
     return Column(
       children: [
-        const CircleAvatar(
+        CircleAvatar(
           radius: 38,
-          backgroundColor: Color(0xFFE9E1FF),
-          child: Icon(
-            Icons.person_outline,
-            size: 42,
-            color: campusPurple,
-          ),
+          backgroundColor: const Color(0xFFE9E1FF),
+          child: (user == null || anonymous)
+              ? const Icon(
+                  Icons.person_outline,
+                  size: 42,
+                  color: campusPurple,
+                )
+              : Text(
+                  name.characters.first.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: campusPurple,
+                  ),
+                ),
         ),
         const SizedBox(height: 14),
-        const Text(
-          'Pengguna Campus Lost & Found',
-          style: TextStyle(
+        Text(
+          name,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
             fontSize: 19,
             fontWeight: FontWeight.bold,
             color: campusInk,
           ),
         ),
-        const SizedBox(height: 8),
+        if (email != null && email.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            email,
+            style: const TextStyle(color: Colors.black54),
+          ),
+        ],
+        const SizedBox(height: 10),
         Chip(
           avatar: Icon(
             anonymous
@@ -135,12 +168,81 @@ class _Header extends StatelessWidget {
                 ? 'Belum masuk'
                 : anonymous
                     ? 'Mode tamu (anonim)'
-                    : 'Akun pengguna',
+                    : 'Akun terdaftar',
           ),
           backgroundColor: const Color(0xFFE9E1FF),
           side: BorderSide.none,
         ),
       ],
+    );
+  }
+}
+
+class _AuthActions extends StatelessWidget {
+  final User? user;
+  const _AuthActions({required this.user});
+
+  Future<void> _logout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Keluar dari akun?'),
+        content: const Text(
+          'Kamu akan kembali ke halaman Masuk.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, keluar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await AuthService.signOut();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final anonymous = user?.isAnonymous == true;
+
+    if (user == null) return const SizedBox.shrink();
+
+    if (anonymous) {
+      return Column(
+        children: [
+          const _Note(
+            'Kamu masuk sebagai tamu. Laporan yang dibuat sebagai '
+            'tamu tidak ikut terbawa ke akun terdaftar.',
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: () => AuthService.signOut(),
+            icon: const Icon(Icons.login),
+            label: const Text('Masuk / Daftar Akun'),
+          ),
+        ],
+      );
+    }
+
+    return OutlinedButton.icon(
+      onPressed: () => _logout(context),
+      icon: const Icon(Icons.logout),
+      label: const Text('Keluar'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.red.shade700,
+        side: BorderSide(color: Colors.red.shade200),
+        padding: const EdgeInsets.symmetric(vertical: 15),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(13),
+        ),
+      ),
     );
   }
 }
