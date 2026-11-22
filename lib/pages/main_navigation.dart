@@ -3,6 +3,7 @@ import 'home_page.dart';
 import 'search_page.dart';
 import 'my_reports_page.dart';
 import 'report_page.dart';
+import 'profile_page.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -28,10 +29,7 @@ class _MainNavigationState extends State<MainNavigation> {
       const SearchPage(),
       const ReportPage(),
       const MyReportsPage(),
-      const _TemporaryPage(
-        title: 'Profil',
-        icon: Icons.person_outline,
-      ),
+      const ProfilePage(),
     ];
 
     return Scaffold(
