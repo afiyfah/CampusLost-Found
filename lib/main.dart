@@ -1,9 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
-import 'pages/main_navigation.dart';
+import 'pages/auth_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,14 +10,6 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  try {
-    if (FirebaseAuth.instance.currentUser == null) {
-      await FirebaseAuth.instance.signInAnonymously();
-    }
-  } catch (e) {
-    debugPrint('Gagal login anonim: $e');
-  }
 
   runApp(const CampusLostFoundApp());
 }
@@ -50,7 +41,7 @@ class CampusLostFoundApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const MainNavigation(),
+      home: const AuthGate(),
     );
   }
 }
