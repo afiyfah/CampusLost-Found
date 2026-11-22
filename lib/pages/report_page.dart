@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../services/cloudinary_service.dart';
 import '../services/report_service.dart';
 import '../widgets/report_card.dart';
 
@@ -142,28 +143,25 @@ class _ReportPageState extends State<ReportPage> {
       return;
     }
 
-    // Foto perlu diunggah ke penyimpanan cloud
-    // sebelum URL-nya dapat disimpan ke Firestore.
-    if (selectedImageBytes != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Foto berhasil dipilih, tetapi penyimpanan '
-            'foto ke cloud belum diaktifkan. '
-            'Hapus foto dahulu untuk mengirim laporan '
-            'tanpa foto.',
-          ),
-          duration: Duration(seconds: 5),
-        ),
-      );
-      return;
-    }
-
     setState(() {
       saving = true;
     });
 
     try {
+      String imageUrl = '';
+      final imageBytes = selectedImageBytes;
+      final imageName = selectedImageName;
+
+      if (imageBytes != null) {
+        if (imageName == null || imageName.isEmpty) {
+          throw Exception('Nama file foto tidak tersedia.');
+        }
+        imageUrl = await CloudinaryService.uploadImage(
+          imageBytes: imageBytes,
+          fileName: imageName,
+        );
+      }
+
       await ReportService.create(
         reportType: type,
         itemName: name.text,
@@ -173,7 +171,7 @@ class _ReportPageState extends State<ReportPage> {
         eventTime: time.text.trim(),
         description: description.text,
         contact: contact.text,
-        imageUrl: '',
+        imageUrl: imageUrl,
       );
 
       if (!mounted) return;
@@ -645,8 +643,8 @@ class _ReportPageState extends State<ReportPage> {
             const SizedBox(height: 8),
 
             const Text(
-              'Foto baru ditampilkan sebagai pratinjau. '
-              'Penyimpanan foto online belum dikonfigurasi.',
+              'Foto akan diunggah saat laporan dikirim. '
+              'Gunakan foto barang tanpa informasi pribadi.',
               style: TextStyle(
                 fontSize: 11,
                 color: Colors.black54,

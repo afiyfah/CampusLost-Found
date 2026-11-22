@@ -233,17 +233,29 @@ class _HomePageState extends State<HomePage> {
                         bottom: 10,
                       ),
                       child: ListTile(
-                        leading: Container(
-                          padding:
-                              const EdgeInsets.all(15),
-                          decoration: BoxDecoration(
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            width: 54,
+                            height: 54,
                             color: const Color(0xFFEDE8FA),
-                            borderRadius:
-                                BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.inventory_2_outlined,
-                            color: purple,
+                            child: reportText(data, 'imageUrl', '')
+                                    .startsWith('https://')
+                                ? Image.network(
+                                    reportText(data, 'imageUrl', ''),
+                                    width: 54,
+                                    height: 54,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, _, _) =>
+                                        const Icon(
+                                      Icons.inventory_2_outlined,
+                                      color: purple,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.inventory_2_outlined,
+                                    color: purple,
+                                  ),
                           ),
                         ),
                         title: Text(

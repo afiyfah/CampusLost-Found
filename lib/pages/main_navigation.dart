@@ -1,8 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'home_page.dart';
 import 'search_page.dart';
 import 'my_reports_page.dart';
+import 'report_page.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -26,10 +26,7 @@ class _MainNavigationState extends State<MainNavigation> {
     final pages = [
       HomePage(onNavigate: changePage),
       const SearchPage(),
-      const _TemporaryPage(
-        title: 'Lapor Barang',
-        icon: Icons.add_circle_outline,
-      ),
+      const ReportPage(),
       const MyReportsPage(),
       const _TemporaryPage(
         title: 'Profil',
