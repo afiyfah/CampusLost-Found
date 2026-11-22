@@ -1,3 +1,4 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -5,10 +6,15 @@ import 'package:flutter/services.dart';
 
 import '../services/auth_service.dart';
 import '../services/report_service.dart';
-import '../widgets/report_card.dart';
 
-/// Ringkasan laporan milik pengguna yang sedang login.
-/// Dipisah dari widget agar mudah diuji tanpa Firebase.
+// WARNA TEMA
+const Color profilePurple = Color(0xFF5946B2);
+const Color profileInk = Color(0xFF20304D);
+const Color profileMuted = Color(0xFF77718D);
+const Color profileBackground = Color(0xFFF8F7FD);
+const Color profileLavender = Color(0xFFE9E3FA);
+
+// LOGIKA STATISTIK TETAP DIPERTAHANKAN
 class ProfileStats {
   final int total;
   final int lost;
@@ -27,15 +33,20 @@ class ProfileStats {
   factory ProfileStats.fromData(
     Iterable<Map<String, dynamic>> items,
   ) {
-    int total = 0, lost = 0, found = 0, active = 0, finished = 0;
+    int total = 0;
+    int lost = 0;
+    int found = 0;
+    int active = 0;
+    int finished = 0;
 
     for (final data in items) {
       total++;
+
       if (data['reportType'] == 'hilang') lost++;
       if (data['reportType'] == 'ditemukan') found++;
-      // Dokumen tanpa field status dianggap 'aktif'
-      // (sama seperti ReportCard).
+
       final status = data['status'] ?? 'aktif';
+
       if (status == 'selesai') {
         finished++;
       } else {
@@ -53,49 +64,7 @@ class ProfileStats {
   }
 }
 
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // userChanges() ikut berubah saat nama akun selesai disimpan.
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.userChanges(),
-      initialData: FirebaseAuth.instance.currentUser,
-      builder: (context, snapshot) {
-        final user = snapshot.data;
-
-        return Scaffold(
-          backgroundColor: campusBackground,
-          appBar: AppBar(title: const Text('Profil')),
-          body: ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              _Header(user: user),
-              const SizedBox(height: 22),
-              const _SectionTitle('Ringkasan Laporan Saya'),
-              const SizedBox(height: 10),
-              if (user == null)
-                const _Note(
-                  'Sesi pengguna belum tersedia, '
-                  'ringkasan laporan tidak dapat ditampilkan.',
-                )
-              else
-                const _StatsSection(),
-              const SizedBox(height: 22),
-              const _SectionTitle('ID Akun'),
-              const SizedBox(height: 8),
-              _UidBox(uid: user?.uid),
-              const SizedBox(height: 22),
-              _AuthActions(user: user),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
+// NAMA PENGGUNA
 String profileDisplayName(User? user) {
   if (user == null) return 'Belum masuk';
   if (user.isAnonymous) return 'Tamu';
@@ -104,12 +73,116 @@ String profileDisplayName(User? user) {
   if (name.isNotEmpty) return name;
 
   final email = user.email ?? '';
-  return email.contains('@') ? email.split('@').first : 'Pengguna';
+  return email.contains('@')
+      ? email.split('@').first
+      : 'Pengguna';
 }
 
-class _Header extends StatelessWidget {
+// HALAMAN PROFIL
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.userChanges(),
+      initialData: FirebaseAuth.instance.currentUser,
+      builder: (context, snapshot) {
+        final user = snapshot.data;
+
+        return Scaffold(
+          backgroundColor: profileBackground,
+          appBar: AppBar(
+            title: const Text(
+              'Profil Saya',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: profileInk,
+              ),
+            ),
+            backgroundColor: Colors.white,
+            elevation: 0,
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 24,
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 900,
+                ),
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Informasi Akun',
+                      style: TextStyle(
+                        color: profileInk,
+                        fontSize: 21,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    const Text(
+                      'Kelola informasi akun dan pantau '
+                      'aktivitas laporanmu.',
+                      style: TextStyle(
+                        color: profileMuted,
+                        fontSize: 13,
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    _ProfileHeader(user: user),
+
+                    const SizedBox(height: 28),
+
+                    const _SectionTitle(
+                      'Ringkasan Aktivitas',
+                    ),
+                    const SizedBox(height: 12),
+
+                    if (user == null)
+                      const _Note(
+                        'Sesi pengguna belum tersedia.',
+                      )
+                    else
+                      const _StatsSection(),
+
+                    const SizedBox(height: 28),
+
+                    const _SectionTitle(
+                      'Detail Akun',
+                    ),
+                    const SizedBox(height: 12),
+
+                    _AccountCard(user: user),
+
+                    const SizedBox(height: 22),
+
+                    _AuthActions(user: user),
+
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// KARTU IDENTITAS PENGGUNA
+class _ProfileHeader extends StatelessWidget {
   final User? user;
-  const _Header({required this.user});
+
+  const _ProfileHeader({required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -117,69 +190,431 @@ class _Header extends StatelessWidget {
     final name = profileDisplayName(user);
     final email = user?.email;
 
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 38,
-          backgroundColor: const Color(0xFFE9E1FF),
-          child: (user == null || anonymous)
-              ? const Icon(
-                  Icons.person_outline,
-                  size: 42,
-                  color: campusPurple,
-                )
-              : Text(
-                  name.characters.first.toUpperCase(),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: const Color(0xFFEAE7F3),
+        ),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 34,
+            backgroundColor: profileLavender,
+            child: user == null || anonymous
+                ? const Icon(
+                    Icons.person_outline,
+                    size: 36,
+                    color: profilePurple,
+                  )
+                : Text(
+                    name.characters.first.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 29,
+                      fontWeight: FontWeight.bold,
+                      color: profilePurple,
+                    ),
+                  ),
+          ),
+
+          const SizedBox(width: 17),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 32,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: campusPurple,
+                    color: profileInk,
                   ),
                 ),
-        ),
-        const SizedBox(height: 14),
-        Text(
-          name,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 19,
-            fontWeight: FontWeight.bold,
-            color: campusInk,
-          ),
-        ),
-        if (email != null && email.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Text(
-            email,
-            style: const TextStyle(color: Colors.black54),
+
+                const SizedBox(height: 5),
+
+                Text(
+                  email != null && email.isNotEmpty
+                      ? email
+                      : 'Tidak ada email terdaftar',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: profileMuted,
+                  ),
+                ),
+
+                const SizedBox(height: 11),
+
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 11,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: profileLavender,
+                    borderRadius:
+                        BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        anonymous
+                            ? Icons.visibility_outlined
+                            : Icons.verified_user_outlined,
+                        size: 15,
+                        color: profilePurple,
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          user == null
+                              ? 'Belum masuk'
+                              : anonymous
+                                  ? 'Mode tamu'
+                                  : 'Akun terdaftar',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: profilePurple,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
-        const SizedBox(height: 10),
-        Chip(
-          avatar: Icon(
-            anonymous
-                ? Icons.visibility_off_outlined
-                : Icons.verified_user_outlined,
-            size: 18,
-            color: campusPurple,
-          ),
-          label: Text(
-            user == null
-                ? 'Belum masuk'
-                : anonymous
-                    ? 'Mode tamu (anonim)'
-                    : 'Akun terdaftar',
-          ),
-          backgroundColor: const Color(0xFFE9E1FF),
-          side: BorderSide.none,
-        ),
-      ],
+      ),
     );
   }
 }
 
+// RINGKASAN LAPORAN DARI FIRESTORE
+class _StatsSection extends StatelessWidget {
+  const _StatsSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<
+        QuerySnapshot<Map<String, dynamic>>>(
+      stream: ReportService.watchMine(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return _Note(
+            'Gagal membaca ringkasan: ${snapshot.error}',
+          );
+        }
+
+        if (!snapshot.hasData) {
+          return const Padding(
+            padding: EdgeInsets.all(20),
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        final stats = ProfileStats.fromData(
+          snapshot.data!.docs.map(
+            (document) => document.data(),
+          ),
+        );
+
+        final items = [
+          _StatItem(
+            'Total Laporan',
+            stats.total,
+            Icons.inventory_2_outlined,
+            profilePurple,
+          ),
+          _StatItem(
+            'Barang Hilang',
+            stats.lost,
+            Icons.search_off_outlined,
+            const Color(0xFFD48A29),
+          ),
+          _StatItem(
+            'Ditemukan',
+            stats.found,
+            Icons.inventory_outlined,
+            const Color(0xFF3F9D79),
+          ),
+          _StatItem(
+            'Masih Aktif',
+            stats.active,
+            Icons.schedule_outlined,
+            profilePurple,
+          ),
+          _StatItem(
+            'Selesai',
+            stats.finished,
+            Icons.check_circle_outline,
+            const Color(0xFF3F9D79),
+          ),
+        ];
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+
+            final columns = width >= 700
+                ? 3
+                : width >= 380
+                    ? 2
+                    : 1;
+
+            const spacing = 12.0;
+
+            final cardWidth =
+                (width - spacing * (columns - 1)) /
+                    columns;
+
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: items.map((item) {
+                return SizedBox(
+                  width: cardWidth,
+                  child: _StatCard(item: item),
+                );
+              }).toList(),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+// DATA KARTU STATISTIK
+class _StatItem {
+  final String label;
+  final int value;
+  final IconData icon;
+  final Color color;
+
+  const _StatItem(
+    this.label,
+    this.value,
+    this.icon,
+    this.color,
+  );
+}
+
+// KARTU STATISTIK RINGKAS
+class _StatCard extends StatelessWidget {
+  final _StatItem item;
+
+  const _StatCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 112,
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(
+          color: const Color(0xFFEAE7F3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 43,
+            height: 43,
+            decoration: BoxDecoration(
+              color: item.color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(
+              item.icon,
+              size: 22,
+              color: item.color,
+            ),
+          ),
+
+          const SizedBox(width: 13),
+
+          Expanded(
+            child: Column(
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${item.value}',
+                  style: const TextStyle(
+                    fontSize: 23,
+                    fontWeight: FontWeight.bold,
+                    color: profileInk,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  item.label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: profileMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// DETAIL IDENTITAS AKUN
+class _AccountCard extends StatelessWidget {
+  final User? user;
+
+  const _AccountCard({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: const Color(0xFFEAE7F3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.shield_outlined,
+                color: profilePurple,
+              ),
+              SizedBox(width: 9),
+              Text(
+                'Identitas Pengguna',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: profileInk,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 17),
+
+          const Divider(
+            color: Color(0xFFEAE7F3),
+          ),
+
+          const SizedBox(height: 14),
+
+          const Text(
+            'ID Akun Firebase',
+            style: TextStyle(
+              fontSize: 12,
+              color: profileMuted,
+            ),
+          ),
+
+          const SizedBox(height: 9),
+
+          _UidBox(uid: user?.uid),
+        ],
+      ),
+    );
+  }
+}
+
+// SALIN ID AKUN
+class _UidBox extends StatelessWidget {
+  final String? uid;
+
+  const _UidBox({required this.uid});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 13,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        color: profileBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFEAE7F3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: SelectableText(
+              uid ?? 'Belum masuk',
+              style: const TextStyle(
+                fontSize: 12,
+                color: profileInk,
+              ),
+            ),
+          ),
+
+          if (uid != null)
+            IconButton(
+              tooltip: 'Salin ID',
+              icon: const Icon(
+                Icons.copy_outlined,
+                size: 19,
+                color: profilePurple,
+              ),
+              onPressed: () async {
+                await Clipboard.setData(
+                  ClipboardData(text: uid!),
+                );
+
+                if (!context.mounted) return;
+
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'ID akun berhasil disalin.',
+                    ),
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// AKSI LOGIN DAN LOGOUT
 class _AuthActions extends StatelessWidget {
   final User? user;
+
   const _AuthActions({required this.user});
 
   Future<void> _logout(BuildContext context) async {
@@ -210,180 +645,66 @@ class _AuthActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final anonymous = user?.isAnonymous == true;
+    if (user == null) {
+      return const SizedBox.shrink();
+    }
 
-    if (user == null) return const SizedBox.shrink();
-
-    if (anonymous) {
+    if (user!.isAnonymous) {
       return Column(
         children: [
           const _Note(
-            'Kamu masuk sebagai tamu. Laporan yang dibuat sebagai '
-            'tamu tidak ikut terbawa ke akun terdaftar.',
+            'Kamu masuk sebagai tamu. Laporan yang '
+            'dibuat sebagai tamu tidak ikut '
+            'terbawa ke akun terdaftar.',
           ),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: () => AuthService.signOut(),
-            icon: const Icon(Icons.login),
-            label: const Text('Masuk / Daftar Akun'),
+
+          const SizedBox(height: 14),
+
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => AuthService.signOut(),
+              icon: const Icon(Icons.login),
+              label: const Text(
+                'Masuk / Daftar Akun',
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: profilePurple,
+                padding: const EdgeInsets.all(15),
+              ),
+            ),
           ),
         ],
       );
     }
 
-    return OutlinedButton.icon(
-      onPressed: () => _logout(context),
-      icon: const Icon(Icons.logout),
-      label: const Text('Keluar'),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.red.shade700,
-        side: BorderSide(color: Colors.red.shade200),
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(13),
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () => _logout(context),
+        icon: const Icon(Icons.logout),
+        label: const Text('Keluar dari Akun'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xFFC74755),
+          side: const BorderSide(
+            color: Color(0xFFF0C5CB),
+          ),
+          padding: const EdgeInsets.symmetric(
+            vertical: 16,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(13),
+          ),
         ),
       ),
     );
   }
 }
 
-class _StatsSection extends StatelessWidget {
-  const _StatsSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: ReportService.watchMine(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return _Note(
-            'Gagal membaca ringkasan: ${snapshot.error}',
-          );
-        }
-
-        if (!snapshot.hasData) {
-          return const Padding(
-            padding: EdgeInsets.all(20),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        final s = ProfileStats.fromData(
-          snapshot.data!.docs.map((d) => d.data()),
-        );
-
-        return GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 1.9,
-          children: [
-            _StatTile('Total laporan', s.total, Icons.inventory_2_outlined),
-            _StatTile('Barang hilang', s.lost, Icons.search_off_outlined),
-            _StatTile('Barang ditemukan', s.found, Icons.task_alt_outlined),
-            _StatTile('Masih aktif', s.active, Icons.hourglass_bottom),
-            _StatTile('Selesai', s.finished, Icons.check_circle_outline),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _StatTile extends StatelessWidget {
-  final String label;
-  final int value;
-  final IconData icon;
-
-  const _StatTile(this.label, this.value, this.icon);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE8E5F2)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: campusPurple),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$value',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: campusInk,
-                  ),
-                ),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.black54,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _UidBox extends StatelessWidget {
-  final String? uid;
-  const _UidBox({required this.uid});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8E5F2)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: SelectableText(
-              uid ?? 'Belum masuk',
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-          if (uid != null)
-            IconButton(
-              tooltip: 'Salin ID',
-              icon: const Icon(Icons.copy, size: 18),
-              onPressed: () async {
-                await Clipboard.setData(ClipboardData(text: uid!));
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('ID sesi disalin')),
-                );
-              },
-            ),
-        ],
-      ),
-    );
-  }
-}
-
+// JUDUL BAGIAN
 class _SectionTitle extends StatelessWidget {
   final String text;
+
   const _SectionTitle(this.text);
 
   @override
@@ -391,16 +712,18 @@ class _SectionTitle extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(
+        fontSize: 17,
         fontWeight: FontWeight.bold,
-        fontSize: 15,
-        color: campusInk,
+        color: profileInk,
       ),
     );
   }
 }
 
+// PESAN INFORMASI
 class _Note extends StatelessWidget {
   final String text;
+
   const _Note(this.text);
 
   @override
@@ -408,7 +731,11 @@ class _Note extends StatelessWidget {
     return Text(
       text,
       textAlign: TextAlign.center,
-      style: const TextStyle(color: Colors.black54),
+      style: const TextStyle(
+        fontSize: 13,
+        color: profileMuted,
+        height: 1.5,
+      ),
     );
   }
 }

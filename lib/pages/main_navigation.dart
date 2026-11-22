@@ -1,4 +1,6 @@
+
 import 'package:flutter/material.dart';
+
 import 'home_page.dart';
 import 'search_page.dart';
 import 'my_reports_page.dart';
@@ -73,50 +75,6 @@ class _MainNavigationState extends State<MainNavigation> {
             label: 'Profil',
           ),
         ],
-      ),
-    );
-  }
-}
-
-// Halaman sementara untuk fitur dalam pengembangan
-class _TemporaryPage extends StatelessWidget {
-  final String title;
-  final IconData icon;
-
-  const _TemporaryPage({
-    required this.title,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 65,
-              color: const Color(0xFF5946B2),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Halaman sedang dalam pengembangan.',
-            ),
-          ],
-        ),
       ),
     );
   }
