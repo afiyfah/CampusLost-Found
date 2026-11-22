@@ -24,7 +24,7 @@ Hanya ada satu koleksi: **`reports`**. Laporan barang hilang dan barang ditemuka
 | `eventTime` | string | Ya | Jam kejadian (teks) |
 | `description` | string | Ya | Ciri-ciri / keterangan barang |
 | `contact` | string | Ya | Kontak pelapor (nomor WhatsApp) |
-| `imageUrl` | string | Tidak | URL foto; boleh kosong `""` |
+| `imageUrl` | string | Tidak | Alamat/URL foto; boleh kosong `""` (foto belum diunggah ke Firebase Storage) |
 | `status` | string | Ya | `aktif` (default saat dibuat) atau `selesai` |
 | `userId` | string | Ya | UID Firebase Auth pembuat laporan |
 | `createdAt` | timestamp | Ya | `FieldValue.serverTimestamp()` saat dibuat |
@@ -61,6 +61,13 @@ Hanya ada satu koleksi: **`reports`**. Laporan barang hilang dan barang ditemuka
 
 Filter jenis, status, dan kata kunci pada halaman Pencarian dilakukan **di sisi aplikasi** (client-side) dari hasil `watchAll()`.
 
+### Fungsi bantu (di `report_service.dart`)
+
+| Fungsi | Kegunaan | Hasil |
+|---|---|---|
+| `reportText(data, key, fallback)` | Mengambil teks dari field dokumen | Teks field, atau `-` jika kosong/tidak ada |
+| `reportDate(value)` | Mengubah `Timestamp` menjadi teks tanggal | Format `d/M/yyyy` (mis. `5/3/2026`), atau `-` jika bukan Timestamp |
+
 ## 4. Alur Status Laporan
 
 ```
@@ -71,7 +78,7 @@ Tidak ada perpindahan balik dari `selesai` ke `aktif` di aplikasi saat ini.
 
 ## 5. Autentikasi
 
-- `main.dart` memanggil `signInAnonymously()` bila belum ada sesi.
+- `main.dart` memanggil `signInAnonymously()` bila belum ada sesi. Jika belum ada sesi saat `create()` atau `watchMine()` dipanggil, aplikasi melempar error `Pengguna belum login.`
 - `userId` pada laporan = `FirebaseAuth.instance.currentUser.uid`.
 - Akun anonim terikat pada perangkat/sesi; jika data aplikasi dihapus, UID berubah dan laporan lama tidak muncul lagi di "Laporan Saya".
 - Data contoh (seed) memakai `userId: "user_demo"`, sehingga hanya muncul di Beranda/Pencarian, tidak di Laporan Saya.
@@ -111,5 +118,6 @@ service cloud.firestore {
 ## 8. Catatan & Keterbatasan
 
 - `contact` (nomor WhatsApp) tersimpan sebagai teks biasa dan terbaca oleh semua pengguna yang login; ini disengaja agar penemu/pemilik bisa saling menghubungi.
-- `imageUrl` hanya menyimpan URL; Firebase Storage belum dipakai.
+- `imageUrl` hanya menyimpan teks alamat foto; Firebase Storage belum dipakai.
+- Tombol "Hubungi Pelapor" di halaman Detail memakai nilai field `contact` untuk membuka WhatsApp (paket `url_launcher`). Nomor yang salah format akan membuat WhatsApp gagal terbuka.
 - Pencarian client-side mengunduh semua dokumen `reports`; untuk data besar perlu paginasi atau query terindeks.
